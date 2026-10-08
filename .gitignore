@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+
+# Виртуальные окружения
+.venv/
+venv/
+
+# Временные файлы и журналы
+*.tmp
+*.log
+
+# Редакторы и операционная система
+.idea/
+.vscode/
+.DS_Store
