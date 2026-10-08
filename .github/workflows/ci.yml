@@ -1,0 +1,30 @@
+name: Проверка проекта
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - name: Получение исходного кода
+        uses: actions/checkout@v4
+      - name: Установка Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Установка средств проверки
+        run: python -m pip install --upgrade pip flake8
+      - name: Проверка синтаксиса и критических ошибок
+        run: |
+          python -m compileall -q src tests
+          flake8 src tests --select=E9,F63,F7,F82
+      - name: Запуск тестов
+        run: python -m unittest -v
