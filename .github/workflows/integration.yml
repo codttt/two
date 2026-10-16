@@ -1,0 +1,35 @@
+name: Интеграция модулей
+
+on:
+  push:
+    branches: [main, develop, lr3-integration]
+  pull_request:
+    branches: [main]
+
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9", "3.11", "3.13"]
+    steps:
+      - name: Получение исходного кода
+        uses: actions/checkout@v7
+      - name: Установка Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Установка средств проверки
+        run: python -m pip install -r requirements-dev.txt
+      - name: Инспекция кода
+        run: flake8 src tests tools
+      - name: Интеграционные тесты и покрытие
+        run: |
+          coverage run -m unittest discover -v
+          coverage report --fail-under=90
+      - name: Проверка примера JSON
+        run: |
+          python -m src.main \
+            --request examples/request.json \
+            --response examples/response.json
