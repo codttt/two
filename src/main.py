@@ -1,100 +1,59 @@
-"""Обмен элементов главной и побочной диагоналей квадратной матрицы."""
+"""Запуск интегрированной системы обработки матрицы."""
+
+import argparse
+from tempfile import TemporaryDirectory
+
+from src.input_module import build_request, parse_row, read_matrix, read_size
+from src.integration import process_request_file
+from src.json_transport import write_json_message
+from src.matrix_operations import (
+    swap_diagonals_by_columns,
+    swap_diagonals_by_rows,
+    validate_square_matrix,
+)
+from src.output_module import format_number, print_matrix, print_response
 
 
-def read_size(input_func=input, output_func=print):
-    """Считать положительный размер квадратной матрицы."""
-    while True:
-        try:
-            size = int(input_func("Введите размер квадратной матрицы n: "))
-            if size <= 0:
-                raise ValueError
-            return size
-        except ValueError:
-            output_func("Ошибка: n должно быть положительным целым числом.")
+__all__ = [
+    "format_number",
+    "parse_row",
+    "print_matrix",
+    "read_matrix",
+    "read_size",
+    "swap_diagonals_by_columns",
+    "swap_diagonals_by_rows",
+    "validate_square_matrix",
+]
 
 
-def parse_row(text, size):
-    """Преобразовать строку в список из size вещественных чисел."""
-    values = [float(item.replace(",", ".")) for item in text.split()]
-    if len(values) != size:
-        raise ValueError(f"требуется ровно {size} элементов")
-    return values
-
-
-def read_matrix(size, input_func=input, output_func=print):
-    """Считать квадратную матрицу построчно с повтором ошибочного ввода."""
-    matrix = []
-    for row_number in range(1, size + 1):
-        while True:
-            raw = input_func(f"Строка {row_number}: ")
-            try:
-                row = parse_row(raw, size)
-            except ValueError as error:
-                output_func(f"Ошибка: {error}.")
-                continue
-            matrix.append(row)
-            break
-    return matrix
-
-
-def validate_square_matrix(matrix):
-    """Проверить, что матрица непустая и квадратная."""
-    if not matrix or any(len(row) != len(matrix) for row in matrix):
-        raise ValueError("матрица должна быть непустой и квадратной")
-
-
-def swap_diagonals_by_rows(matrix):
-    """Поменять диагональные элементы внутри каждой строки."""
-    validate_square_matrix(matrix)
-    result = [row[:] for row in matrix]
-    size = len(result)
-    for row_index in range(size):
-        secondary_column = size - 1 - row_index
-        result[row_index][row_index], result[row_index][secondary_column] = (
-            result[row_index][secondary_column],
-            result[row_index][row_index],
-        )
-    return result
-
-
-def swap_diagonals_by_columns(matrix):
-    """Поменять диагональные элементы внутри каждого столбца."""
-    validate_square_matrix(matrix)
-    result = [row[:] for row in matrix]
-    size = len(result)
-    for column_index in range(size):
-        secondary_row = size - 1 - column_index
-        result[column_index][column_index], result[secondary_row][column_index] = (
-            result[secondary_row][column_index],
-            result[column_index][column_index],
-        )
-    return result
-
-
-def format_number(value):
-    """Представить число без лишних нулей после запятой."""
-    return f"{value:g}"
-
-
-def print_matrix(matrix, output_func=print):
-    """Вывести матрицу построчно."""
-    for row in matrix:
-        output_func(" ".join(format_number(value) for value in row))
-
-
-def main():
+def run_interactive():
+    """Выполнить полный цикл интеграции для консольного ввода."""
     size = read_size()
     print(f"Введите {size} строк по {size} вещественных чисел:")
     matrix = read_matrix(size)
+    with TemporaryDirectory() as temporary_directory:
+        request_path = f"{temporary_directory}/request.json"
+        response_path = f"{temporary_directory}/response.json"
+        write_json_message(request_path, build_request(matrix))
+        response = process_request_file(request_path, response_path)
+    print_response(response)
 
-    print("\nИсходная матрица:")
-    print_matrix(matrix)
 
-    print("\nОбмен диагоналей по строкам:")
-    print_matrix(swap_diagonals_by_rows(matrix))
+def main(arguments=None):
+    """Запустить интерактивный режим или обработать JSON-файл."""
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--request", help="путь к входному JSON-файлу")
+    parser.add_argument("--response", help="путь к выходному JSON-файлу")
+    parser.add_argument("--timeout", type=float, default=0.0, help="таймаут ожидания")
+    options = parser.parse_args(arguments)
 
-    print("\nОбмен диагоналей по столбцам:")
-    print_matrix(swap_diagonals_by_columns(matrix))
+    if options.request or options.response:
+        if not options.request or not options.response:
+            parser.error("--request и --response указываются вместе")
+        response = process_request_file(options.request, options.response, options.timeout)
+        print_response(response)
+        return response
+    run_interactive()
 
 
 if __name__ == "__main__":
