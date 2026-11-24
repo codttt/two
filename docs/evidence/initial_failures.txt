@@ -1,0 +1,14 @@
+Первый запус тестов качества
+
+Команда:
+python -m unittest tests.test_quality -v
+
+Результат:
+Ran 11 tests in 0.013s
+FAILED (failures=3, errors=1)
+
+Обнаруженные дефекты:
+1. parse_row не отклонял values nan, inf и -inf.
+2. process_request_file не формировал ответ при поврежденном JSON.
+
+Примечание: три падения являются тремя наборами данных для одного дефекта.
