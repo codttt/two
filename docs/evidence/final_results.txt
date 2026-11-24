@@ -1,0 +1,11 @@
+Итоговая проверка
+
+python -m unittest discover -v
+Ran 46 tests in 0.075s
+OK
+
+coverage report -m
+TOTAL: 220 statements, 6 missed, 68 branches, 2 partially covered, 97%
+
+flake8 src tests tools
+Замечаний нет.

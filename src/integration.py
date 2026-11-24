@@ -87,8 +87,9 @@ def error_response(message, error):
 
 def process_request_file(request_path, response_path, timeout=0.0):
     """Прочитать запрос, интегрировать модули и записать ответ."""
-    message = read_json_message(request_path, timeout=timeout)
+    message = None
     try:
+        message = read_json_message(request_path, timeout=timeout)
         response = integrate_request(message)
     except (IntegrationError, ValueError) as error:
         response = error_response(message, error)

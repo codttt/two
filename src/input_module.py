@@ -1,5 +1,6 @@
 """Ввод данных и формирование интеграционного запроса."""
 
+from math import isfinite
 from uuid import uuid4
 
 from src.matrix_operations import validate_square_matrix
@@ -25,6 +26,8 @@ def parse_row(text, size):
     values = [float(item.replace(",", ".")) for item in text.split()]
     if len(values) != size:
         raise ValueError(f"требуется ровно {size} элементов")
+    if not all(isfinite(value) for value in values):
+        raise ValueError("элементы матрицы должны быть конечными числами")
     return values
 
 
